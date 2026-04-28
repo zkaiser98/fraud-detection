@@ -25,6 +25,13 @@ def test_label_risk_thresholds():
     assert label_risk(75) == "high"
 
 
+def test_label_risk_exact_boundaries():
+    assert label_risk(29) == "low"
+    assert label_risk(30) == "medium"
+    assert label_risk(59) == "medium"
+    assert label_risk(60) == "high"
+
+
 # --- amount ---
 
 def test_large_amount_adds_risk():
@@ -36,6 +43,14 @@ def test_medium_amount_adds_some_risk():
     mid = score_transaction(base_tx(amount_usd=600))
     high = score_transaction(base_tx(amount_usd=1200))
     assert low < mid < high
+
+
+def test_large_amount_exact_points():
+    assert score_transaction(base_tx(amount_usd=1200)) == 25
+
+
+def test_medium_amount_exact_points():
+    assert score_transaction(base_tx(amount_usd=600)) == 10
 
 
 # --- device risk ---
@@ -52,12 +67,24 @@ def test_very_high_device_risk_adds_more_than_medium():
     assert high_device > medium_device
 
 
+def test_high_device_risk_exact_points():
+    assert score_transaction(base_tx(device_risk_score=75)) == 25
+
+
+def test_medium_device_risk_exact_points():
+    assert score_transaction(base_tx(device_risk_score=50)) == 10
+
+
 # --- international ---
 
 def test_international_increases_score():
     domestic = score_transaction(base_tx(is_international=0))
     international = score_transaction(base_tx(is_international=1))
     assert international > domestic
+
+
+def test_international_exact_points():
+    assert score_transaction(base_tx(is_international=1)) == 15
 
 
 # --- velocity ---
@@ -75,12 +102,28 @@ def test_velocity_tiers_ordered():
     assert v1 < v4 < v8
 
 
+def test_high_velocity_exact_points():
+    assert score_transaction(base_tx(velocity_24h=8)) == 20
+
+
+def test_medium_velocity_exact_points():
+    assert score_transaction(base_tx(velocity_24h=4)) == 5
+
+
 # --- failed logins ---
 
 def test_high_failed_logins_increases_score():
     clean = score_transaction(base_tx(failed_logins_24h=0))
     suspicious = score_transaction(base_tx(failed_logins_24h=6))
     assert suspicious > clean
+
+
+def test_high_failed_logins_exact_points():
+    assert score_transaction(base_tx(failed_logins_24h=6)) == 20
+
+
+def test_medium_failed_logins_exact_points():
+    assert score_transaction(base_tx(failed_logins_24h=3)) == 10
 
 
 # --- prior chargebacks ---
@@ -90,6 +133,14 @@ def test_prior_chargebacks_increase_score():
     one_cb = score_transaction(base_tx(prior_chargebacks=1))
     two_cb = score_transaction(base_tx(prior_chargebacks=2))
     assert no_cb < one_cb < two_cb
+
+
+def test_multiple_prior_chargebacks_exact_points():
+    assert score_transaction(base_tx(prior_chargebacks=2)) == 20
+
+
+def test_single_prior_chargeback_exact_points():
+    assert score_transaction(base_tx(prior_chargebacks=1)) == 5
 
 
 # --- end-to-end risk profiles ---
